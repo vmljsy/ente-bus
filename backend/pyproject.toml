@@ -1,0 +1,10 @@
+[project]
+name = "backend"
+version = "0.0.1"
+description = "Crowdsourced Bus Timing - MVP"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "fastapi>=0.115.12",
+    "sqlalchemy>=2.0.40",
+]
