@@ -1,10 +1,30 @@
 [project]
 name = "backend"
 version = "0.0.1"
-description = "Crowdsourced Bus Timing - MVP"
+description = "Crowdsourced Bus Timing System for Kerala - GTFS Compatible"
 readme = "README.md"
 requires-python = ">=3.12"
 dependencies = [
     "fastapi>=0.115.12",
     "sqlalchemy>=2.0.40",
+    "psycopg2-binary>=2.9.9", # PostgreSQL adapter
+    "python-dotenv>=1.0.0", # For environment variables
+    "pydantic>=2.6.1",
+    "uvicorn>=0.34.1",
+    "python-multipart>=0.0.9", # For form data handling
+    "email-validator>=2.1.0", # For email validation
+    "python-jose[cryptography]>=3.3.0", # For JWT tokens
+    "passlib[bcrypt]>=1.7.4", # For password hashing
+    "ipykernel>=6.29.5",
 ]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.0.0",
+    "pytest-asyncio>=0.23.5",
+    "httpx>=0.26.0",
+    "black>=24.1.1",
+    "isort>=5.13.2",
+    "flake8>=7.0.0",
+]
+
