@@ -13,6 +13,18 @@ from .schemas import (
 
 router = APIRouter()
 
+@router.post("/routes", response_model=RouteRead)
+def create_route(route: RouteCreate, db: Session = Depends(get_db)):
+    db_route = Route(**route.dict())
+    try:
+        db.add(db_route)
+        db.commit()
+        db.refresh(db_route)
+        return db_route
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(status_code=400, detail=str(e))
+
 @router.get("/routes", response_model=List[RouteRead])
 def get_routes(
     start_stop: Optional[str] = None,

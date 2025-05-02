@@ -1,59 +1,145 @@
-import React, { useState, useEffect } from 'react';
-import { fetchRoutes, fetchStops } from './api';
+import React, { useState, useCallback } from 'react';
+import Navigation from './Navigation';
 import RoutesSearch from './RoutesSearch';
 import StopsList from './StopsList';
 import SightingForm from './SightingForm';
 import TripSchedule from './TripSchedule';
-import { FaBus, FaMapMarkerAlt, FaExchangeAlt, FaSearch, FaTimes, FaClock } from 'react-icons/fa';
+import AddTrip from './AddTrip';
+import AddRoute from './AddRoute';
+import AddStop from './AddStop';
+import { createRoute } from './api';
+import { FaBus, FaPlus } from 'react-icons/fa';
 import './App.css';
 
 function App() {
+  const [currentPage, setCurrentPage] = useState('search');
   const [selectedRoute, setSelectedRoute] = useState(null);
   const [selectedStop, setSelectedStop] = useState(null);
-  const [stops, setStops] = useState([]);
-  const [startStop, setStartStop] = useState('');
-  const [endStop, setEndStop] = useState('');
-  const [routes, setRoutes] = useState([]);
-  const [loadingRoutes, setLoadingRoutes] = useState(false);
-  const [loadingStops, setLoadingStops] = useState(true);
-  const [error, setError] = useState(null);
-  const [viewType, setViewType] = useState('stops'); // 'stops' or 'schedule'
+  const [isAddRouteOpen, setIsAddRouteOpen] = useState(false);
+  const [isAddStopOpen, setIsAddStopOpen] = useState(false);
 
-  useEffect(() => {
-    const loadStops = async () => {
-      try {
-        setLoadingStops(true);
-        setError(null);
-        const data = await fetchStops();
-        setStops(data || []);
-      } catch (err) {
-        console.error('Failed to load stops:', err);
-        setError('Failed to load stops. The backend server might not be running.');
-      } finally {
-        setLoadingStops(false);
+  // Handle page changes with proper state management
+  const handlePageChange = useCallback((page) => {
+    // Only reset route if changing to search page
+    if (page !== currentPage) {
+      setCurrentPage(page);
+      setSelectedStop(null);
+      if (page === 'search') {
+        setSelectedRoute(null);
       }
-    };
-    loadStops();
+    }
+  }, [currentPage]);
+
+  // Handle route selection
+  const handleRouteSelect = useCallback((route) => {
+    setSelectedRoute(route);
+    setSelectedStop(null);
   }, []);
 
-  const handleFindRoutes = async (e) => {
-    e.preventDefault();
-    try {
-      setLoadingRoutes(true);
-      setError(null);
-      setRoutes([]);
-      const data = await fetchRoutes('', startStop, endStop);
-      setRoutes(data);
-    } catch (err) {
-      console.error('Failed to load routes:', err);
-      setError('Failed to load routes. Please try again.');
-    } finally {
-      setLoadingRoutes(false);
+  // Handle back navigation
+  const handleBack = useCallback(() => {
+    if (selectedStop) {
+      setSelectedStop(null);
+    } else if (selectedRoute) {
+      setSelectedRoute(null);
     }
-  };
+  }, [selectedStop, selectedRoute]);
 
-  const handleViewToggle = () => {
-    setViewType(viewType === 'stops' ? 'schedule' : 'stops');
+  // Handle adding a new route
+  const handleAddRoute = useCallback(async (routeData) => {
+    try {
+      const result = await createRoute(routeData);
+      if (result.success) {
+        setIsAddRouteOpen(false);
+      }
+    } catch (err) {
+      console.error('Failed to add route:', err);
+    }
+  }, []);
+
+  const handleAddStop = useCallback((stopData) => {
+    console.log('Adding stop:', stopData);
+  }, []);
+
+  const renderContent = () => {
+    switch (currentPage) {
+      case 'search':
+        if (!selectedRoute) {
+          return (
+            <div className="search-container">
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
+                <h2><FaBus className="section-icon" />Find Bus Routes</h2>
+              </div>
+              <RoutesSearch onSelectRoute={handleRouteSelect} />
+            </div>
+          );
+        }
+        return selectedStop ? (
+          <SightingForm
+            stop={selectedStop}
+            onBack={handleBack}
+          />
+        ) : (
+          <StopsList
+            route={selectedRoute}
+            onSelectStop={setSelectedStop}
+            onBack={handleBack}
+          />
+        );
+
+      case 'trips':
+        return (
+          <TripSchedule
+            route={selectedRoute}
+            onBack={handleBack}
+          />
+        );
+
+      case 'contribute':
+        return (
+          <div className="add-trip-container">
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
+              <h2><FaBus className="section-icon" />Contribute Details</h2>
+            </div>
+            <div className="contribute-form">
+              <div className="button-container">
+                <button 
+                  className="add-detail-button"
+                  onClick={() => setIsAddStopOpen(true)}
+                >
+                  <FaPlus />
+                  Add Stop
+                </button>
+                <button 
+                  className="add-detail-button"
+                  onClick={() => setIsAddRouteOpen(true)}
+                >
+                  <FaPlus />
+                  Add Route
+                </button>
+                <button 
+                  className="add-detail-button"
+                  onClick={() => setCurrentPage('add-trip')}
+                >
+                  <FaPlus />
+                  Add Trip
+                </button>
+              </div>
+            </div>
+          </div>
+        );
+
+      case 'add-trip':
+        return (
+          <AddTrip
+            route={selectedRoute}
+            onBack={handleBack}
+          />
+        );
+
+      default:
+        return null;
+    }
   };
 
   return (
@@ -64,141 +150,26 @@ function App() {
         <p className="subtitle">Crowdsource Bus Data</p>
       </div>
 
-      {error && (
-        <div className="error-message">
-          <p>{error}</p>
-          <button onClick={() => setError(null)}>
-            <FaTimes />
-            Dismiss
-          </button>
-        </div>
-      )}
+      <Navigation 
+        activePage={currentPage} 
+        onPageChange={handlePageChange}
+      />
 
-      {!selectedRoute && (
-        <div className="search-container">
-          <h2><FaSearch className="section-icon" /> Find Buses Between Stops</h2>
-          {loadingStops ? (
-            <div className="loading">Loading stops...</div>
-          ) : (
-            <form onSubmit={handleFindRoutes} className="search-form">
-              <div className="select-group">
-                <div className="input-wrapper">
-                  <FaMapMarkerAlt className="input-icon" />
-                  <select 
-                    value={startStop} 
-                    onChange={e => setStartStop(e.target.value)} 
-                    required
-                    className="select-input"
-                  >
-                    <option value="">Select Start</option>
-                    {stops.map(stop => (
-                      <option key={stop.stop_id} value={stop.stop_name}>
-                        {stop.stop_name}
-                      </option>
-                    ))}
-                  </select>
-                </div>
+      <div className={`page-content ${currentPage}`}>
+        {renderContent()}
+      </div>
 
-                <FaExchangeAlt className="exchange-icon" />
-
-                <div className="input-wrapper">
-                  <FaMapMarkerAlt className="input-icon" />
-                  <select 
-                    value={endStop} 
-                    onChange={e => setEndStop(e.target.value)} 
-                    required
-                    className="select-input"
-                  >
-                    <option value="">Select Destination</option>
-                    {stops.map(stop => (
-                      <option key={stop.stop_id} value={stop.stop_name}>
-                        {stop.stop_name}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-              </div>
-              
-              <button type="submit" className="search-button" disabled={loadingRoutes}>
-                {loadingRoutes ? (
-                  <>
-                    <div className="spinner"></div>
-                    Finding Buses...
-                  </>
-                ) : (
-                  <>
-                    <FaSearch />
-                    Find Buses
-                  </>
-                )}
-              </button>
-            </form>
-          )}
-
-          {routes.length > 0 && (
-            <div className="routes-list">
-              <h3>Available Routes</h3>
-              <div className="route-cards">
-                {routes.map(route => (
-                  <button
-                    key={route.route_id}
-                    onClick={() => {
-                      setSelectedRoute(route);
-                      setSelectedStop(null);
-                    }}
-                    className="route-card"
-                  >
-                    <div className="route-number">
-                      <FaBus className="route-icon" />
-                      {route.route_short_name}
-                    </div>
-                    <div className="route-name">{route.route_long_name || ''}</div>
-                  </button>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {routes.length === 0 && !loadingRoutes && (startStop && endStop) && (
-            <div className="no-routes">No routes found for this selection.</div>
-          )}
-        </div>
-      )}
-
-      {selectedRoute && !selectedStop && (
-        <>
-          {viewType === 'stops' ? (
-            <StopsList
-              route={selectedRoute}
-              onSelectStop={stop => setSelectedStop(stop)}
-              onBack={() => setSelectedRoute(null)}
-            />
-          ) : (
-            <TripSchedule
-              route={selectedRoute}
-              onBack={() => setSelectedRoute(null)}
-            />
-          )}
-          <button className="view-toggle" onClick={handleViewToggle}>
-            {viewType === 'stops' ? (
-              <>
-                <FaClock /> View Schedule
-              </>
-            ) : (
-              <>
-                <FaMapMarkerAlt /> View Stops
-              </>
-            )}
-          </button>
-        </>
-      )}
-
-      {selectedRoute && selectedStop && (
-        <SightingForm
-          stop={selectedStop}
-          onBack={() => setSelectedStop(null)}
-        />
-      )}
+      <AddRoute 
+        isOpen={isAddRouteOpen}
+        onClose={() => setIsAddRouteOpen(false)}
+        onAdd={handleAddRoute}
+      />
+      
+      <AddStop
+        isOpen={isAddStopOpen}
+        onClose={() => setIsAddStopOpen(false)}
+        onAdd={handleAddStop}
+      />
     </div>
   );
 }
