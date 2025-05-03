@@ -1,0 +1,130 @@
+.stop-select-container {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  width: 100%;
+  color: #1f2937;
+}
+
+.stop-select-label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: #374151;
+}
+
+.stop-select-icon {
+  color: #4b5563;
+}
+
+.stop-select-wrapper {
+  position: relative;
+  width: 100%;
+}
+
+.stop-select-input {
+  width: 100%;
+  padding: 0.75rem 1rem;
+  font-size: 0.875rem;
+  border: 1px solid #d1d5db;
+  border-radius: 0.5rem;
+  background-color: #ffffff;
+  color: #1f2937;
+  transition: all 0.2s;
+  outline: none;
+}
+
+.stop-select-input:hover {
+  border-color: #9ca3af;
+}
+
+.stop-select-input:focus {
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.25);
+}
+
+.stop-select-input::placeholder {
+  color: #9ca3af;
+}
+
+.stop-select-dropdown {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  right: 0;
+  background: white;
+  border: 1px solid #e5e7eb;
+  border-radius: 0.5rem;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1),
+              0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  max-height: 200px;
+  overflow-y: auto;
+  z-index: 50;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.stop-select-item {
+  padding: 0.75rem 1rem;
+  cursor: pointer;
+  transition: background-color 0.2s;
+  color: #1f2937;
+  font-size: 0.875rem;
+}
+
+.stop-select-item:hover {
+  background-color: #f3f4f6;
+  color: #2563eb;
+}
+
+.stop-select-spinner {
+  position: absolute;
+  right: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 16px;
+  height: 16px;
+  border: 2px solid #e5e7eb;
+  border-top-color: #3b82f6;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+.stop-select-no-results {
+  padding: 0.75rem 1rem;
+  color: #6b7280;
+  text-align: center;
+  font-size: 0.875rem;
+  background: white;
+  border: 1px solid #e5e7eb;
+  border-radius: 0.5rem;
+  margin-top: 4px;
+}
+
+@keyframes spin {
+  to {
+    transform: translateY(-50%) rotate(360deg);
+  }
+}
+
+/* Custom scrollbar */
+.stop-select-dropdown::-webkit-scrollbar {
+  width: 6px;
+}
+
+.stop-select-dropdown::-webkit-scrollbar-track {
+  background: #f3f4f6;
+  border-radius: 3px;
+}
+
+.stop-select-dropdown::-webkit-scrollbar-thumb {
+  background: #d1d5db;
+  border-radius: 3px;
+}
+
+.stop-select-dropdown::-webkit-scrollbar-thumb:hover {
+  background: #9ca3af;
+}

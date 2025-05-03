@@ -4,8 +4,7 @@ from .api.routes import router
 from .models import Base
 from .db.db import engine
 
-# Create database tables
-Base.metadata.create_all(bind=engine)
+# Remove direct table creation. Use Alembic for migrations.
 
 app = FastAPI(
     title="Ente Bus API",

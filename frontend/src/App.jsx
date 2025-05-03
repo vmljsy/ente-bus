@@ -7,7 +7,7 @@ import TripSchedule from './TripSchedule';
 import AddTrip from './AddTrip';
 import AddRoute from './AddRoute';
 import AddStop from './AddStop';
-import { createRoute } from './api';
+import { createRoute, createStop } from './api';
 import { FaBus, FaPlus } from 'react-icons/fa';
 import './App.css';
 
@@ -51,14 +51,35 @@ function App() {
       const result = await createRoute(routeData);
       if (result.success) {
         setIsAddRouteOpen(false);
+        // Force a re-render of components that show routes
+        setCurrentPage(prevPage => {
+          if (prevPage === 'search') {
+            return 'search';  // This will trigger a re-render
+          }
+          return prevPage;
+        });
       }
     } catch (err) {
       console.error('Failed to add route:', err);
     }
   }, []);
 
-  const handleAddStop = useCallback((stopData) => {
-    console.log('Adding stop:', stopData);
+  const handleAddStop = useCallback(async (stopData) => {
+    try {
+      const result = await createStop(stopData);
+      if (result?.stop) {
+        setIsAddStopOpen(false);
+        // Force components that show stops to refresh their data
+        setCurrentPage(prevPage => {
+          if (prevPage === 'search') {
+            return 'search';  // This will trigger a re-render
+          }
+          return prevPage;
+        });
+      }
+    } catch (err) {
+      console.error('Failed to add stop:', err);
+    }
   }, []);
 
   const renderContent = () => {
@@ -70,7 +91,10 @@ function App() {
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
                 <h2><FaBus className="section-icon" />Find Bus Routes</h2>
               </div>
-              <RoutesSearch onSelectRoute={handleRouteSelect} />
+              <RoutesSearch 
+                onSelectRoute={handleRouteSelect} 
+                onAddStop={() => setIsAddStopOpen(true)}
+              />
             </div>
           );
         }
@@ -132,8 +156,9 @@ function App() {
       case 'add-trip':
         return (
           <AddTrip
-            route={selectedRoute}
             onBack={handleBack}
+            onAddRoute={() => setIsAddRouteOpen(true)}
+            onAddStop={() => setIsAddStopOpen(true)}
           />
         );
 
@@ -163,6 +188,7 @@ function App() {
         isOpen={isAddRouteOpen}
         onClose={() => setIsAddRouteOpen(false)}
         onAdd={handleAddRoute}
+        onAddStop={() => setIsAddStopOpen(true)}
       />
       
       <AddStop

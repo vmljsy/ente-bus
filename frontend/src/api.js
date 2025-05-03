@@ -141,6 +141,20 @@ export async function searchBuses(query = '') {
   return data;
 }
 
+export async function searchStops(query, limit = 5) {
+  const params = new URLSearchParams({ query, limit });
+  const { success, data } = await tryFetch(`${API_BASE}/api/v1/stops/search?${params}`);
+
+  if (!success) {
+    // Return filtered dummy stops for demo purposes
+    return DUMMY_STOPS.filter(stop =>
+      stop.stop_name.toLowerCase().includes(query.toLowerCase())
+    );
+  }
+
+  return data;
+}
+
 export async function submitSighting(data) {
   const { success, data: responseData, error } = await tryFetch(`${API_BASE}/api/v1/sightings`, {
     method: 'POST',
@@ -234,7 +248,7 @@ export async function createStop(stopData) {
   });
   
   if (!success) {
-    // Simulate successful creation in demo mode
+    // In demo mode, simulate successful creation
     return {
       success: true,
       stop: {
@@ -244,5 +258,9 @@ export async function createStop(stopData) {
     };
   }
   
-  return data;
+  // For successful API response, ensure we return in expected format
+  return {
+    success: true,
+    stop: data
+  };
 }

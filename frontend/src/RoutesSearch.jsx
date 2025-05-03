@@ -1,29 +1,18 @@
 import React, { useState, useEffect } from 'react';
-import { fetchRoutes, fetchStops } from './api';
-import { FaSearch, FaBus, FaMapMarkerAlt, FaExchangeAlt } from 'react-icons/fa';
+import { fetchRoutes } from './api';
+import { FaSearch, FaBus, FaArrowRight } from 'react-icons/fa';
+import StopSelect from './StopSelect';
+import './RoutesSearch.css';
 
-export default function RoutesSearch({ onSelectRoute }) {
+export default function RoutesSearch({ onSelectRoute, onAddStop }) {
   const [query, setQuery] = useState('');
   const [routes, setRoutes] = useState([]);
   const [loading, setLoading] = useState(false);
   const [startStop, setStartStop] = useState('');
   const [endStop, setEndStop] = useState('');
-  const [stops, setStops] = useState([]);
   const [error, setError] = useState(null);
 
   useEffect(() => {
-    const loadStops = async () => {
-      try {
-        const data = await fetchStops();
-        setStops(data || []);
-      } catch (err) {
-        console.error('Failed to load stops:', err);
-        setError('Failed to load stops');
-      }
-    };
-    loadStops();
-
-    // Clear state when component mounts
     setQuery('');
     setRoutes([]);
     setStartStop('');
@@ -41,7 +30,7 @@ export default function RoutesSearch({ onSelectRoute }) {
     try {
       setLoading(true);
       setError(null);
-      setRoutes([]); // Clear routes before new search
+      setRoutes([]); 
       const data = await fetchRoutes(query, startStop, endStop);
       setRoutes(data || []);
     } catch (err) {
@@ -71,59 +60,25 @@ export default function RoutesSearch({ onSelectRoute }) {
     <div className="route-search">
       <form onSubmit={handleSearch} className="search-form">
         <div className="select-group">
-          <div className="form-group">
-            <div className="form-label-wrapper">
-              <FaMapMarkerAlt className="input-icon" />
-            <label htmlFor="start-stop">Start Location</label>
-            </div>
-            <div className="input-wrapper">
-              <select 
-                id="start-stop"
-                value={startStop} 
-                onChange={e => handleStopChange('start', e.target.value)} 
-                className="select-input"
-              >
-                <option value="">Select Start Stop</option>
-                {stops.map(stop => (
-                  <option 
-                    key={stop.stop_id} 
-                    value={stop.stop_name}
-                    disabled={stop.stop_name === endStop}
-                  >
-                    {stop.stop_name}
-                  </option>
-                ))}
-              </select>
-            </div>
-          </div>
+          <StopSelect
+            id="start-stop"
+            value={startStop}
+            onChange={(value) => handleStopChange('start', value)}
+            label="From"
+            disabledValue={endStop}
+            required
+          />
 
-          <FaExchangeAlt className="exchange-icon" />
+          <FaArrowRight className="exchange-icon" />
 
-          <div className="form-group">
-            <div className="form-label-wrapper">
-              <FaMapMarkerAlt className="input-icon" />
-              <label htmlFor="end-stop">End Location</label>
-            </div>
-            <div className="input-wrapper">
-              <select 
-                id="end-stop"
-                value={endStop} 
-                onChange={e => handleStopChange('end', e.target.value)} 
-                className="select-input"
-              >
-                <option value="">Select End Stop</option>
-                {stops.map(stop => (
-                  <option 
-                    key={stop.stop_id} 
-                    value={stop.stop_name}
-                    disabled={stop.stop_name === startStop}
-                  >
-                    {stop.stop_name}
-                  </option>
-                ))}
-              </select>
-            </div>
-          </div>
+          <StopSelect
+            id="end-stop"
+            value={endStop}
+            onChange={(value) => handleStopChange('end', value)}
+            label="To"
+            disabledValue={startStop}
+            required
+          />
         </div>
 
         <button 
@@ -149,7 +104,6 @@ export default function RoutesSearch({ onSelectRoute }) {
 
       {routes.length > 0 && (
         <div className="routes-list">
-          <h3>Available Routes</h3>
           <div className="route-cards">
             {routes.map(route => (
               <button
@@ -168,8 +122,8 @@ export default function RoutesSearch({ onSelectRoute }) {
         </div>
       )}
 
-      {routes.length === 0 && !loading && (startStop || endStop) && (
-        <div className="no-routes">No routes found for the selected stops.</div>
+      {routes.length === 0 && !loading && (startStop || endStop || query) && (
+        <div className="no-routes">No routes found for the selected criteria.</div>
       )}
     </div>
   );

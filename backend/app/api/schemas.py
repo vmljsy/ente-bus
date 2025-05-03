@@ -7,8 +7,8 @@ class RouteBase(BaseModel):
     route_short_name: str
     route_long_name: Optional[str] = None
     route_type: int
-    start_stop: Optional[str] = None
-    end_stop: Optional[str] = None
+    start_stop_id: Optional[str] = None
+    end_stop_id: Optional[str] = None
     via_stops: Optional[str] = None
 
 class RouteCreate(RouteBase):
@@ -62,6 +62,7 @@ class StopTime(BaseModel):
     stop_headsign: Optional[str] = None
     pickup_type: Optional[int] = None
     drop_off_type: Optional[int] = None
+    stop_name: Optional[str] = None
 
     class Config:
         from_attributes = True

@@ -98,7 +98,7 @@ export default function TripSchedule({ route, onBack }) {
                     </div>
                     <FaArrowRight className="arrow-icon" />
                     <div className="stop-name">
-                      {stopTime.stop_id}
+                      {stopTime.stop_name}
                     </div>
                   </div>
                 ))}

@@ -11,8 +11,8 @@ class Route(Base):
     route_short_name = Column(String, nullable=False)
     route_long_name = Column(String, nullable=True)
     route_type = Column(Integer, nullable=False)
-    start_stop = Column(String, nullable=True)
-    end_stop = Column(String, nullable=True)
+    start_stop_id = Column(String, ForeignKey('stops.stop_id'), nullable=True)
+    end_stop_id = Column(String, ForeignKey('stops.stop_id'), nullable=True)
     via_stops = Column(String, nullable=True)
 
 class Stop(Base):

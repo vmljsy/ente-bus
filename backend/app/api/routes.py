@@ -27,15 +27,15 @@ def create_route(route: RouteCreate, db: Session = Depends(get_db)):
 
 @router.get("/routes", response_model=List[RouteRead])
 def get_routes(
-    start_stop: Optional[str] = None,
-    end_stop: Optional[str] = None,
+    start_stop_id: Optional[str] = None,
+    end_stop_id: Optional[str] = None,
     db: Session = Depends(get_db)
 ):
     query = db.query(Route)
-    if start_stop:
-        query = query.filter(Route.start_stop == start_stop)
-    if end_stop:
-        query = query.filter(Route.end_stop == end_stop)
+    if start_stop_id:
+        query = query.filter(Route.start_stop_id == start_stop_id)
+    if end_stop_id:
+        query = query.filter(Route.end_stop_id == end_stop_id)
     return query.all()
 
 @router.get("/routes/{route_id}", response_model=RouteRead)
@@ -68,6 +68,17 @@ def search_sightings(
 @router.get("/stops", response_model=List[StopSchema])
 def get_stops(db: Session = Depends(get_db)):
     return db.query(Stop).all()
+
+@router.get("/stops/search", response_model=List[StopSchema])
+def search_stops(
+    query: str,
+    limit: int = Query(5, ge=1, le=50),
+    db: Session = Depends(get_db)
+):
+    return db.query(Stop)\
+        .filter(Stop.stop_name.ilike(f"%{query}%"))\
+        .limit(limit)\
+        .all()
 
 @router.post("/stops", response_model=StopSchema)
 def create_stop(stop: StopSchema, db: Session = Depends(get_db)):
@@ -105,20 +116,52 @@ def get_trip(trip_id: str, db: Session = Depends(get_db)):
 @router.get("/trips/{trip_id}/stop_times", response_model=List[StopTimeSchema])
 def get_trip_stop_times(trip_id: str, db: Session = Depends(get_db)):
     stop_times = db.query(StopTime)\
+        .join(Stop, Stop.stop_id == StopTime.stop_id)\
+        .add_columns(Stop.stop_name)\
         .filter(StopTime.trip_id == trip_id)\
         .order_by(StopTime.stop_sequence)\
         .all()
     if not stop_times:
         raise HTTPException(status_code=404, detail="No stop times found for this trip")
-    return stop_times
+    
+    # Format the response to include stop_name
+    result = []
+    for stop_time, stop_name in stop_times:
+        stop_time_dict = {
+            "trip_id": stop_time.trip_id,
+            "arrival_time": stop_time.arrival_time.strftime("%H:%M:%S"),
+            "departure_time": stop_time.departure_time.strftime("%H:%M:%S"),
+            "stop_id": stop_time.stop_id,
+            "stop_sequence": stop_time.stop_sequence,
+            "stop_headsign": stop_time.stop_headsign,
+            "pickup_type": stop_time.pickup_type,
+            "drop_off_type": stop_time.drop_off_type,
+            "stop_name": stop_name
+        }
+        result.append(stop_time_dict)
+    return result
 
 @router.post("/stop_times", response_model=StopTimeSchema)
 def create_stop_time(stop_time: StopTimeSchema, db: Session = Depends(get_db)):
-    db_stop_time = StopTime(
-        **stop_time.dict(),
-        arrival_time=datetime.strptime(stop_time.arrival_time, "%H:%M:%S").time(),
-        departure_time=datetime.strptime(stop_time.departure_time, "%H:%M:%S").time()
-    )
+    def parse_time(time_str: str) -> time:
+        try:
+            return datetime.strptime(time_str, "%H:%M:%S").time()
+        except ValueError:
+            try:
+                # Try HH:MM format and append :00 for seconds
+                return datetime.strptime(time_str + ":00", "%H:%M:%S").time()
+            except ValueError:
+                raise HTTPException(
+                    status_code=400, 
+                    detail=f"Invalid time format: {time_str}. Expected HH:MM or HH:MM:SS"
+                )
+    
+    # Create a dict of the values and update times separately
+    stop_time_data = stop_time.dict()
+    stop_time_data["arrival_time"] = parse_time(stop_time.arrival_time)
+    stop_time_data["departure_time"] = parse_time(stop_time.departure_time)
+    
+    db_stop_time = StopTime(**stop_time_data)
     db.add(db_stop_time)
     db.commit()
     db.refresh(db_stop_time)
